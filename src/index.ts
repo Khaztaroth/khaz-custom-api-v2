@@ -11,6 +11,8 @@
 import { routeRequest } from "./router"
 
 export interface Env {
+	WEATHER_KEY: string,
+	DEFAULT_PLACE: string
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
 	// MY_KV_NAMESPACE: KVNamespace;
 	//

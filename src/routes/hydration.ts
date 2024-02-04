@@ -1,72 +1,118 @@
-const weatherUrl: string = "http://api.weatherapi.com/v1/current.json";
-const WeatherKey: string = "c7548475ea364c1a903230343230208";
-const birbland: string = "Chillan";
+async function GetUptime(channel: string) {
+    if (channel?.toLowerCase() !== "khaztaroth315") {
+      const apiUrl = `https://decapi.me/twitch/uptime/${channel}`;
+      const res = fetch(apiUrl);
+      const body = (await res).text();
+      return await body;
+    } else {
+      const apiUrl = `https://decapi.me/twitch/uptime/Khaztaroth315`;
+      const res = fetch(apiUrl);
+      const body = (await res).text();
+      return await body;
+    }
+  }
+  function toSeconds(minutes: number, hours?: number) {
+    if (hours) {
+      const seconds = hours * 3600 + minutes * 60;
+      return seconds;
+    } else {
+      const seconds = minutes * 60;
+      return seconds;
+    }
+  }
 
-export interface WeatherData {
-    location: Location;
-    current: Current;
-}
+  export type Volume = {
+    L?: string,
+    oz: string,
+    mL: string,
+  }
 
-export interface Location {
-    name: string;
-    region: string;
-    country: string;
-    lat: number;
-    lon: number;
-    tz_id: string;
-    localtime_epoch: number;
-    localtime: string;
-}
+  async function HydrationCalc(uptime: string) {
+    const timeSplit = uptime.split(" ");
+    const mlPerHour = 154.166;
+    const mlPerSecond = mlPerHour / 3600;
+    const OzPerML = 0.033814027;
 
-export interface Current {
-    temp_c: number;
-    temp_f: number;
-    condition: Condition;
-    wind_mph: number;
-    wind_kph: number;
-    wind_dir: string;
-    humidity: number;
-    feelslike_c: number;
-    feelslike_f: number;
-    uv: number;
-}
-
-export interface Condition {
-    text: string;
-}
-
-async function fetchWeatherData(place: string): Promise<string> {
-    const reqUrl = `${weatherUrl}?key=${WeatherKey}&q=${place}&aqi=no`;
-
-    try {
-        const req = await fetch(reqUrl);
-
-        if (req.ok) {
-            const data: WeatherData = await req.json();
-            const weatherMessage = (place !== birbland)
-                ? `Current weather in ${data.location.name}, ${data.location.region} is ${data.current.temp_c}°C/${data.current.temp_f}°F and ${data.current.condition.text.toLowerCase()} skies, with a temperature sensation of ${data.current.feelslike_c}°C/${data.current.feelslike_f}°F and a humidity of ${data.current.humidity}%.The wind is headed ${data.current.wind_dir} at ${data.current.wind_kph}KPH/${data.current.wind_mph}MPH.`
-
-                : `Current weather in Birbland is ${data.current.temp_c}°C/${data.current.temp_f}°F and ${data.current.condition.text.toLowerCase()} skies, with a temperature sensation of ${data.current.feelslike_c}°C/${data.current.feelslike_f}°F and a humidity of ${data.current.humidity}%. The wind is headed ${data.current.wind_dir} at ${data.current.wind_kph}KPH/${data.current.wind_mph}MPH.`
-
-            return weatherMessage;
-            } else {
-                throw new Error("Request failed with status: " + req.status);
+    switch (timeSplit.length) {
+      case 2: {
+        const uptimeObj = {
+          secondsNum: +timeSplit[0]
+        };
+        const volume = uptimeObj.secondsNum * mlPerSecond;
+        const totalOz = volume * OzPerML;
+        const total = {
+          oz: totalOz.toFixed(2),
+          mL: volume.toFixed(2)
+        };
+        return total;
+      }
+      case 4: {
+        const uptimeObj = {
+          minutesNum: +timeSplit[0],
+          secondsNum: +timeSplit[2]
+        };
+        const volume = (toSeconds(uptimeObj.minutesNum || 0) + uptimeObj.secondsNum) * mlPerSecond;
+        if (volume >= 1e3) {
+          const totalL = volume / 1e3;
+          const totalOz = volume * OzPerML;
+          const total = {
+            L: totalL.toFixed(2),
+            oz: totalOz.toFixed(2),
+            mL: volume.toFixed(2)
+          };
+          return total;
+        } else {
+          const totalOz = volume * OzPerML;
+          const total = {
+            oz: totalOz.toFixed(2),
+            mL: volume.toFixed(2)
+          };
+          return total;
         }
-    } catch (err) {
-        console.log("There was an issue fetching the data", err);
-        throw new Error("Error fetching data");
+      }
+      case 6: {
+        const uptimeObj = {
+          hoursNum: +timeSplit[0],
+          minutesNum: +timeSplit[2],
+          secondsNum: +timeSplit[4]
+        };
+        const volume = (toSeconds(uptimeObj.minutesNum || 0, uptimeObj.hoursNum) + uptimeObj.secondsNum) * mlPerSecond;
+        if (volume >= 1e3) {
+          const totalL = volume / 1e3;
+          const totalOz = volume * OzPerML;
+          const total = {
+            L: totalL.toFixed(2),
+            oz: totalOz.toFixed(2),
+            mL: volume.toFixed(2)
+          };
+          return total;
+        } else {
+          const totalOz = volume * OzPerML;
+          const total = {
+            oz: totalOz.toFixed(2),
+            mL: volume.toFixed(2)
+          };
+          return total;
+        }
+      }
     }
-};
+  }
 
-export async function Weather(request: Request) {
+  export async function Hydration(request: Request, defaultChannel: string) {
     try {
-        const place = new URL(request.url).searchParams.get('place') || birbland;
-        const weatherData = await fetchWeatherData(place);
-        console.log(weatherData);
-        return new Response(weatherData);
-    } catch (err) {
-        console.error("Error", err);
-        return new Response("Internal server error", { status: 500 });
-    }
-};
+      const channel = new URL(request.url).searchParams.get("channel") || defaultChannel;
+      const channelUptime = await GetUptime(channel);
+      const quantity: Volume | undefined = await HydrationCalc(channelUptime);
 
+      if (channelUptime.includes("offline", 2)) {
+        const response = `Channel is offline but you should drink water anyways, for safety`;
+        return new Response(response, { status: 200 });
+      } else {
+        const response = `${channel} has been lilve for ${channelUptime}. At this point they should've drunk ${quantity?.L ? `${quantity.L}L` : `${quantity?.mL}mL`}/${quantity?.oz}oz of water`;
+        return new Response(response, { status: 200 });
+      }
+    } catch (err) {
+      return new Response("Main func error", { status: 500 });
+    }
+  }
+  
