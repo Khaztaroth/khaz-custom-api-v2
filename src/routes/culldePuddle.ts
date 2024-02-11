@@ -43,24 +43,22 @@ export async function JoinPuddle (request: Request, env: Env) {
 
 export async function LeavePuddle (request: Request, env: Env) {
     const user = new URL(request.url).searchParams.get("user")
-
     const currentPuddle = await env.puddle.get("pile")
-    const puddleArray = currentPuddle?.split(",")
-
+    
     if (!user) {
         const message = "User not provided"
-
+        
         return new Response(message)
     } else {
         if (!currentPuddle?.includes(user)) {
             const message = `You are not in the puddle ${user}, don't be silly.`
-
+            
             return new Response(message)
         } else {
             const puddleArray = currentPuddle?.split(",")
             const filterPuddle = puddleArray?.filter(quitter => quitter !== user)
             const filteredPuddle = filterPuddle?.toString() || ''
-            const pileSize = filterPuddle?.length -1
+            const pileSize: number = filterPuddle?.length - 1
 
             await env.puddle.delete("pile")
             await env.puddle.put("pile",filteredPuddle)
