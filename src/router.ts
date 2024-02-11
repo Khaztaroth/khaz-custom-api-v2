@@ -1,6 +1,7 @@
 import { Env } from ".";
 import { Weather } from "./routes/weather";
 import { Hydration } from "./routes/hydration";
+import { DiceRoll } from "./routes/diceRoll";
 
 export async function routeRequest(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
@@ -14,6 +15,8 @@ export async function routeRequest(request: Request, env: Env, ctx: ExecutionCon
         return Weather(request, key, defaultLocation);
       case "hydration":
         return Hydration(request, defaultChannel);
+      case "diceRoll":
+        return DiceRoll(request);
       default:
         return new Response("Not found", { status: 404 });
     }
