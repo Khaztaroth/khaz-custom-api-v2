@@ -58,7 +58,7 @@ export async function LeavePuddle (request: Request, env: Env) {
             const puddleArray = currentPuddle?.split(",")
             const filterPuddle = puddleArray?.filter(quitter => quitter !== user)
             const filteredPuddle = filterPuddle?.toString() || ''
-            const pileSize: number = filterPuddle?.length - 1
+            const pileSize = filterPuddle?.length - 1
 
             await env.puddle.delete("pile")
             await env.puddle.put("pile",filteredPuddle)
