@@ -67,7 +67,7 @@ export async function ClearAttempts(request : Request, env : Env) {
     await env.puddle.delete(tallyKey)
     const savedTally = await env.puddle.get(tallyKey) || "0"
 
-    return new Response(`${user} has cleared their record and is now at ${savedTally} joins.`)
+    return new Response(`${user} has cleared their record and is now at ${savedTally} joins. You can always join again`)
 }
 
 export async function JoinPuddle (request: Request, env: Env) {
