@@ -3,17 +3,24 @@ function randomNumber (max: number) {
 }
 
 export function DiceRoll (request: Request) {
-    const dice : string = new URL(request.url).searchParams.get("dice") || "d20"
-    const diceSize = dice.slice(1)
-    const roll = randomNumber(+diceSize).toFixed()
-
+    const dice : string | null = new URL(request.url).searchParams.get("dice")
+    const diceSize = dice?.slice(1)
     const diceTypes = ["d2", "d4", "d6", "d8", "d10", "d12", "d20", "d100"]
+    
+    if (!dice || !diceSize) {
+        const defaultDice = "20"
+        const roll = randomNumber(+defaultDice).toFixed()
 
-    if (diceTypes.includes(dice)) {
         const response = `You rolled a ${roll}`
         return new Response(response, {status: 200})
     } else {
-        const response = `That's no a real dice`
-        return new Response(response, {status: 200})
+        if (diceTypes.includes(dice)) {
+            const roll = randomNumber(+diceSize).toFixed()
+            const response = `You rolled a ${roll}`
+            return new Response(response, {status: 200})
+        } else {
+            const response = `That's not a real dice`
+            return new Response(response, {status: 200})
+        }
     }
 }

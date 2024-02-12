@@ -6,6 +6,10 @@ export async function PurgePuddle(request:Request, env: Env) {
     return new Response("Puddle is now empty", {status: 200})
 }
 
+async function AddAttempt(count: number, env: Env) {
+    
+}
+
 export async function JoinPuddle (request: Request, env: Env) {
     const person = new URL(request.url).searchParams.get("user")
     const count = new URL(request.url).searchParams.get("count")
