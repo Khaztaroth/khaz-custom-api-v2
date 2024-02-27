@@ -108,7 +108,7 @@ async function GetUptime(channel: string) {
         const response = `Channel is offline but you should drink water anyways, for safety`;
         return new Response(response, { status: 200 });
       } else {
-        const response = `${channel} has been lilve for ${channelUptime}. At this point they should've drunk ${quantity?.L ? `${quantity.L}L` : `${quantity?.mL}mL`}/${quantity?.oz}oz of water`;
+        const response = `${channel} has been live for ${channelUptime}. At this point they should've drunk ${quantity?.L ? `${quantity.L}L` : `${quantity?.mL}mL`}/${quantity?.oz}oz of water`;
         return new Response(response, { status: 200 });
       }
     } catch (err) {
