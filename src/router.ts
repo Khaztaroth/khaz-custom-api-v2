@@ -3,6 +3,7 @@ import { Weather } from "./routes/weather";
 import { Hydration } from "./routes/hydration";
 import { DiceRoll } from "./routes/diceRoll";
 import { ClearAttempts, JoinPuddle, LeavePuddle, PurgePuddle } from "./routes/culldePuddle";
+import { WordPronunciation } from "./routes/toPhonetics";
 
 export async function routeRequest(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
@@ -26,6 +27,8 @@ export async function routeRequest(request: Request, env: Env, ctx: ExecutionCon
         return LeavePuddle(request, env)
       case "cleanRecord": 
         return ClearAttempts(request, env)
+      case "pronunciation":
+        return WordPronunciation(request)
       default:
         return new Response("Not found", { status: 404 });
     }
