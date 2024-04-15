@@ -85,7 +85,7 @@ async function FetchWordData(wrd: string) {
             const secondDef: string | undefined = data[0].meanings[1]?.definitions[0].definition || ''
             const secondPOS: string | undefined = data[0].meanings[1]?.partOfSpeech || ''
 
-            const Pronunciation = `${capitilize(wordSpelling)},${ipa? ` pronounced ${ipa}.` : await fetchWordPronunciation(word)} ${capitilize(firstPOS)}, ${firstDef} ${secondDef? `${capitilize(secondPOS)}, ${secondDef}` : ''} `
+            const Pronunciation = `${capitilize(wordSpelling)},${ipa? ` pronounced ${ipa}.` : await fetchWordPronunciation(word)} ${capitilize(firstPOS)}: ${firstDef} ${secondDef? `${capitilize(secondPOS)}: ${secondDef}` : ''} `
             return Pronunciation
         } else {
             throw new Error("Request failed with status:" + req.status)
