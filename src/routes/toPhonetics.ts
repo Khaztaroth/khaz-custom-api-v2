@@ -24,7 +24,7 @@ async function fetchWordPronunciation(wrd: string) {
         const req = await fetch(requestURL)
         if (req.ok) {
             const data: WordPronunciation = await req.json();
-            const Pronunciation = ` /${data[0]?.tags[1].toString().split(":")[1]}/`
+            const Pronunciation = ` pronounced /${data[0]?.tags[1].toString().split(":")[1]}/`
             return Pronunciation
         } else {
             throw new Error("Request failed with status:" + req.status)
@@ -85,23 +85,28 @@ async function FetchWordData(wrd: string) {
             const secondDef: string | undefined = data[0].meanings[1]?.definitions[0].definition || ''
             const secondPOS: string | undefined = data[0].meanings[1]?.partOfSpeech || ''
 
-            const Pronunciation = `${capitilize(wordSpelling)},${ipa? ` pronounced ${ipa}.` : await fetchWordPronunciation(word)} ${capitilize(firstPOS)}: ${firstDef} ${secondDef? `${capitilize(secondPOS)}: ${secondDef}` : ''} `
+            const Pronunciation = `${capitilize(wordSpelling)},${ipa? ` pronounced ${ipa}.` : await fetchWordPronunciation(word)} || ${capitilize(firstPOS)}: ${firstDef} || ${secondDef? `${capitilize(secondPOS)}: ${secondDef}` : ''} `
             return Pronunciation
         } else {
-            throw new Error("Request failed with status:" + req.status)
+            return new Response ('Could not find that word', {status: 200})
         }
     } catch (err) {
-        console.log("There was an issue fetching the data", err)
-        throw new Error("Error fetching data")
+        throw new Error("Request failed with status:" + err)
     }
 }
 
 export async function WordPronunciation(request: Request) {
     try {
         const word = new URL(request.url).searchParams.get("word") || ''
-        const wordData = await FetchWordData(word)
-        return new Response(wordData)
+        const wordData: string | Response = await FetchWordData(word)
+        if (typeof(wordData) !== "string") {
+            return new Response(wordData.body)
+        }
+        else {
+            return new Response(wordData)
+        }
     } catch (err) {
+        if (err)
         console.log("Error", err)
         return new Response ("Internal server error", {status: 500})
     }
