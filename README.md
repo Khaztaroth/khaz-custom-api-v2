@@ -1,6 +1,6 @@
 Here live the small tools I use to create custom commands for my twitch bot from external data, or with logic that can't be implemented natively in the bot. 
 
-Current features:
+- Current features:
 	- Weather information response that censors a given town
  	- Dice roller that lets you pick the dice
 	- Hydration calculator that takes uptime data from DecAPI and calculates how much water you should've drank
