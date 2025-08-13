@@ -16,8 +16,9 @@ export async function PurgePuddle(request : Request, env : Env): Promise<Respons
     const channelLowercase = channel?.toLowerCase()
     const PileKeyName = `${channelLowercase}-pile`
 
-    if(env.puddle.get(PileKeyName) !== null) {
+    if(env.puddle.get(PileKeyName) !== null && channel !== null) {
         await env.puddle.delete(PileKeyName)
+        console.log(PileKeyName)
         return new Response("Puddle is now empty", {status: 200})
     } else {
         return new Response("What pile?", {status: 400})
