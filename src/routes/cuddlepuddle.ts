@@ -18,13 +18,13 @@ export async function PurgePuddle(request : Request, env : Env): Promise<Respons
     const currentPile = await env.puddle.get(PileKeyName)
 
     if (!channel) {
-        return new Response("Whose pile?", {status: 404})
+        return new Response("Whose puddle?", {status: 404})
     }
     if (!currentPile) {
-        return new Response("What pile?", {status: 404})
+        return new Response("Puddle is already empty", {status: 404})
     }
 
-    env.puddle.delete(PileKeyName)
+    env.puddle.put(PileKeyName,"")
     return new Response("Pudle is now empty.", {status: 200})
 }
 
