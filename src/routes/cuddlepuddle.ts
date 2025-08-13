@@ -15,14 +15,17 @@ export async function PurgePuddle(request : Request, env : Env): Promise<Respons
     const [channel] = GetParameters(request)
     const channelLowercase = channel?.toLowerCase()
     const PileKeyName = `${channelLowercase}-pile`
+    const currentPile = await env.puddle.get(PileKeyName)
 
-    if(env.puddle.get(PileKeyName) !== null && channel !== null) {
-        await env.puddle.delete(PileKeyName)
-        console.log(PileKeyName)
-        return new Response("Puddle is now empty", {status: 200})
-    } else {
-        return new Response("What pile?", {status: 400})
+    if (!channel) {
+        return new Response("Whose pile?", {status: 404})
     }
+    if (!currentPile) {
+        return new Response("What pile?", {status: 404})
+    }
+
+    env.puddle.delete(PileKeyName)
+    return new Response("Pudle is now empty.", {status: 200})
 }
 
 async function AddAttempt(env : Env, user: string, channel: string, count?: string | null): Promise<Number | Response> {
