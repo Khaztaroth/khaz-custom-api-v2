@@ -95,13 +95,10 @@ export async function ClearAttempts(request : Request, env : Env): Promise<Respo
 
 export async function JoinPuddle (request: Request, env: Env): Promise<Response> {
     const [channel, user, count] = GetParameters(request)
+    const CurrentPile = `${channel}-pile`
+    const currentPuddle: string | null = await env.puddle.get(CurrentPile)
+    const puddle: string[] = [currentPuddle || ""]
 
-    const currentPuddle: string[] | null = await env.puddle.get(`${channel}-pile`, {type: "json"})
-    const puddle: string[] = currentPuddle || []
-
-    if (!channel){
-        return new Response("What are we doing, man?", {status: 400})
-    } else {
         if (!user) {
             if (!currentPuddle) {
                 return new Response("No one here I guess ¯\\_(ツ)_/¯")
@@ -118,40 +115,44 @@ export async function JoinPuddle (request: Request, env: Env): Promise<Response>
                 const response = `${user} is already in the puddle, no double dipping`
     
                 return new Response(response, {status: 200})
-            } else {
+            } else if (channel) {
                 const tally = await AddAttempt(env, user, channel, count)
                 const newPuddle = puddle.concat(user)
-                await env.puddle.put(`${channel}-puddle`, newPuddle.toString())
+                await env.puddle.put(CurrentPile, JSON.stringify(newPuddle))
                 const response = `${user} has jumped into the puddle, they've jumped in ${tally} times, spicy.`
                 
                 return new Response(response, {status: 200})
             }        
         }
+        if (!channel) {
+            return new Response("What are we doing, man?", {status: 400})
+        }
+        return new Response("All good? I think??", {status: 200})
     }
-    
-}
 
 export async function LeavePuddle (request: Request, env: Env): Promise<Response> {
     const [channel, user] = GetParameters(request)
-    const currentPuddle: string[] | null = await env.puddle.get(`${channel}-puddle`, {type: "json"})
-    
+    const CurrentPile = `${channel}-pile`
+    const currentPuddle: string | null = await env.puddle.get(CurrentPile)
+
     if (!user) {
         return new Response("Gotta tell me who first", {status: 400})
     } 
-    if (!currentPuddle){
+    if (currentPuddle === null){
         return new Response("Couldn't find puddle", {status: 404})
     } else {
-        if (!JSON.stringify(currentPuddle?.includes(user))) {
+        if (!currentPuddle.includes(user.toLocaleLowerCase())) {
             const message = `You are not in the puddle, ${user}, don't be silly.`
             
             return new Response(message)
         } else {
-            const filterPuddle = currentPuddle?.filter(quitter => quitter !== user)
+            const puddleArray = currentPuddle.split(',')
+            const filterPuddle = puddleArray?.filter(quitter => quitter !== user)
             const filteredPuddle = filterPuddle?.toString() || ''
             const pileSize = filterPuddle?.length - 1
 
-            await env.puddle.put(`${channel}-pile`,filteredPuddle)
-            const message = `${user} had enough and left the puddle. ${pileSize==0? "The puddle is now empty" : `We are down to ${pileSize} ${pileSize>1? "people" : "person"}`}`
+            await env.puddle.put(CurrentPile,filteredPuddle)
+            const message = `${user} had enough and left the puddle. ${pileSize<=0? "The puddle is now empty" : `We are down to ${pileSize} ${pileSize>1? "people" : "person"}`}`
     
             return new Response(message)
         }   

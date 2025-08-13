@@ -176,3 +176,4 @@ src/router.ts
 #old code
 *.v1.*
 _deprecated/
+puddletally.ts
