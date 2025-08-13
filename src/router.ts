@@ -11,7 +11,6 @@ export async function routeRequest(request: Request, env: Env, ctx: ExecutionCon
     const path = url.pathname.split("/").slice(1);
     const weather_key = env.WEATHER_KEY;
     const defaultLocation = env.DEFAULT_PLACE;
-    const defaultChannel = "khaztaroth315";
 
     switch (path[0]) {
       case "weather":
@@ -19,7 +18,7 @@ export async function routeRequest(request: Request, env: Env, ctx: ExecutionCon
       case "timezone":
         return timeZone(request)
       case "hydration":
-        return Hydration(request, defaultChannel);
+        return Hydration(request);
       case "diceRoll":
         return DiceRoll(request);
       case "joinPuddle": 

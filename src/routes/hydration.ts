@@ -1,15 +1,11 @@
-async function GetUptime(channel: string) {
-    if (channel?.toLowerCase() !== "khaztaroth315") {
-      const apiUrl = `https://decapi.me/twitch/uptime/${channel}`;
-      const res = fetch(apiUrl);
-      const body = (await res).text();
-      return await body;
-    } else {
-      const apiUrl = `https://decapi.me/twitch/uptime/Khaztaroth315`;
-      const res = fetch(apiUrl);
-      const body = (await res).text();
-      return await body;
+async function GetUptime(channel: string | null) {
+    if (!channel) {
+      channel = "khaztaroth315"
     }
+    const apiUrl = `https://decapi.me/twitch/uptime/${channel}`;
+    const res = fetch(apiUrl);
+    const body = (await res).text();
+    return await body;
   }
   function toSeconds(minutes: number, hours?: number) {
     if (hours) {
@@ -98,9 +94,9 @@ async function GetUptime(channel: string) {
     }
   }
 
-  export async function Hydration(request: Request, defaultChannel: string) {
+  export async function Hydration(request: Request) {
     try {
-      const channel = new URL(request.url).searchParams.get("channel") || defaultChannel;
+      const channel = new URL(request.url).searchParams.get("channel");
       const channelUptime = await GetUptime(channel);
       const quantity: Volume | undefined = await HydrationCalc(channelUptime);
 
