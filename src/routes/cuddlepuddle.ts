@@ -13,10 +13,15 @@ function GetParameters(request: Request) {
 
 export async function PurgePuddle(request : Request, env : Env): Promise<Response> {
     const [channel] = GetParameters(request)
-    const ChannelPuddleName = `${channel?.toLowerCase()}-pile`
+    const channelLowercase = channel?.toLowerCase()
+    const PileKeyName = `${channelLowercase}-pile`
 
-    env.puddle.delete(ChannelPuddleName)
-    return new Response("Puddle is now empty", {status: 200})
+    if(env.puddle.get(PileKeyName) !== null) {
+        await env.puddle.delete(PileKeyName)
+        return new Response("Puddle is now empty", {status: 200})
+    } else {
+        return new Response("What pile?", {status: 400})
+    }
 }
 
 async function AddAttempt(env : Env, user: string, channel: string, count?: string | null): Promise<Number | Response> {
@@ -134,8 +139,8 @@ export async function JoinPuddle (request: Request, env: Env): Promise<Response>
 export async function LeavePuddle (request: Request, env: Env): Promise<Response> {
     const [channel, user] = GetParameters(request)
     const [channelLowercase, userLowercase] = [channel?.toLowerCase(), user?.toLowerCase()]
-    const CurrentPile = `${channel}-pile`
-    const currentPuddle: string | null = await env.puddle.get(CurrentPile)
+    const PileKeyName = `${channelLowercase}-pile`
+    const currentPuddle: string | null = await env.puddle.get(PileKeyName)
 
     if (!userLowercase) {
         return new Response("Gotta tell me who first", {status: 400})
@@ -153,7 +158,7 @@ export async function LeavePuddle (request: Request, env: Env): Promise<Response
             const filteredPuddle = filterPuddle?.toString() || ''
             const pileSize = filterPuddle?.length - 1
 
-            await env.puddle.put(CurrentPile,filteredPuddle)
+            await env.puddle.put(PileKeyName,filteredPuddle)
             const message = `${user} had enough and left the puddle. ${pileSize<=0? "The puddle is now empty" : `We are down to ${pileSize} ${pileSize>1? "people" : "person"}`}`
     
             return new Response(message)
