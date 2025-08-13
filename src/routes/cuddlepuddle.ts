@@ -47,7 +47,7 @@ async function AddAttempt(env : Env, user: string, channel: string, count?: stri
                 ChannelTally[UserTallyName] = userTally + 1
                 await env.puddle.put(ChannelPuddleName, JSON.stringify(ChannelTally))
             }
-            return userTally
+            return ChannelTally[UserTallyName]
         }
         if(!user){
             return new Response("You gotta tell me who is getting in, buster", {status: 400})
