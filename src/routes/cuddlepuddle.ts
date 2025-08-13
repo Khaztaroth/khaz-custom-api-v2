@@ -20,8 +20,8 @@ export async function PurgePuddle(request : Request, env : Env): Promise<Respons
 }
 
 async function AddAttempt(env : Env, user: string, channel: string, count?: string | null): Promise<Number | Response> {
-    const ChannelPuddleName = `${channel.toLowerCase()}-puddle`
-    const UserTallyName = `${user.toLowerCase()}-tally`
+    const ChannelPuddleName = `${channel}-puddle`
+    const UserTallyName = `${user}-tally`
     const ChannelTally: TallyMarker = await env.puddle.get(ChannelPuddleName, {type: "json"})
 
         if (!ChannelTally) {
@@ -32,10 +32,10 @@ async function AddAttempt(env : Env, user: string, channel: string, count?: stri
             if (count && +count > userTally){userTally = +count}
             if (!userTally) {
                 let tally = 1
-                userTally = tally
+                ChannelTally[UserTallyName] = tally
                 await env.puddle.put(ChannelPuddleName, JSON.stringify(ChannelTally))
             } else {
-                userTally+1
+                ChannelTally[UserTallyName] = userTally + 1
                 await env.puddle.put(ChannelPuddleName, JSON.stringify(ChannelTally))
             }
             return userTally
@@ -47,8 +47,8 @@ async function AddAttempt(env : Env, user: string, channel: string, count?: stri
 }
 
 async function SubstractAttempt(env : Env, user : string, channel: string, count? : string | null): Promise<Response | number> {
-    const ChannelPuddleName = `${channel.toLowerCase()}-puddle`
-    const UserTallyName = `${user.toLowerCase()}-tally`
+    const ChannelPuddleName = `${channel}-puddle`
+    const UserTallyName = `${user}-tally`
     const ChannelTally: TallyMarker = await env.puddle.get(ChannelPuddleName, {type: "json"})
 
         if (!ChannelTally) {
@@ -60,7 +60,7 @@ async function SubstractAttempt(env : Env, user : string, channel: string, count
             if (!userTally) {
                 return new Response("Can't leave if you haven't been here", {status: 400})
             } else {
-                userTally+1
+                ChannelTally[UserTallyName] = userTally + 1
                 await env.puddle.put(ChannelPuddleName, JSON.stringify(ChannelTally))
             }
             return userTally
@@ -95,30 +95,31 @@ export async function ClearAttempts(request : Request, env : Env): Promise<Respo
 
 export async function JoinPuddle (request: Request, env: Env): Promise<Response> {
     const [channel, user, count] = GetParameters(request)
-    const CurrentPile = `${channel}-pile`
-    const currentPuddle: string | null = await env.puddle.get(CurrentPile)
-    const puddle: string[] = [currentPuddle || ""]
+    const [channelLowercase, userLowercase] = [channel?.toLowerCase(), user?.toLowerCase()]
+    const PileKeyName = `${channelLowercase}-pile`
+    const CurrentPile: string | null = await env.puddle.get(PileKeyName)
+    const pile: string[] = [CurrentPile || ""]
 
-        if (!user) {
-            if (!currentPuddle) {
-                return new Response("No one here I guess ¯\\_(ツ)_/¯")
-             } else {
-                const list = puddle.filter(pile => pile !== '').join(', ')
-    
-                const pileSize = puddle?.length - 1
-                const message = `There's currently ${pileSize>1? `${pileSize} people` : `${pileSize} person`} in the puddle: ${list}.`
-    
-                return new Response(message, {status: 200})
-             }
+    if (!userLowercase) {
+        if (!CurrentPile) {
+            return new Response("No one here I guess ¯\\_(ツ)_/¯")
         } else {
-            if (currentPuddle?.includes(user)) {
+            const list = pile.filter(pile => pile !== '').join(', ')
+            
+            const pileSize = pile?.length - 1
+            const message = `There's currently ${pileSize>1? `${pileSize} people` : `${pileSize} person`} in the puddle: ${list}.`
+            
+            return new Response(message, {status: 200})
+        }
+    } else {
+            if (CurrentPile?.includes(userLowercase)) {
                 const response = `${user} is already in the puddle, no double dipping`
     
                 return new Response(response, {status: 200})
-            } else if (channel) {
-                const tally = await AddAttempt(env, user, channel, count)
-                const newPuddle = puddle.concat(user)
-                await env.puddle.put(CurrentPile, JSON.stringify(newPuddle))
+            } else if (channelLowercase) {
+                const tally = await AddAttempt(env, userLowercase, channelLowercase, count)
+                const newPuddle = pile.concat(userLowercase)
+                await env.puddle.put(PileKeyName, JSON.stringify(newPuddle))
                 const response = `${user} has jumped into the puddle, they've jumped in ${tally} times, spicy.`
                 
                 return new Response(response, {status: 200})
@@ -132,22 +133,23 @@ export async function JoinPuddle (request: Request, env: Env): Promise<Response>
 
 export async function LeavePuddle (request: Request, env: Env): Promise<Response> {
     const [channel, user] = GetParameters(request)
+    const [channelLowercase, userLowercase] = [channel?.toLowerCase(), user?.toLowerCase()]
     const CurrentPile = `${channel}-pile`
     const currentPuddle: string | null = await env.puddle.get(CurrentPile)
 
-    if (!user) {
+    if (!userLowercase) {
         return new Response("Gotta tell me who first", {status: 400})
     } 
     if (currentPuddle === null){
         return new Response("Couldn't find puddle", {status: 404})
     } else {
-        if (!currentPuddle.includes(user.toLocaleLowerCase())) {
+        if (!currentPuddle.includes(userLowercase)) {
             const message = `You are not in the puddle, ${user}, don't be silly.`
             
             return new Response(message)
         } else {
             const puddleArray = currentPuddle.split(',')
-            const filterPuddle = puddleArray?.filter(quitter => quitter !== user)
+            const filterPuddle = puddleArray.filter((quitter) => {quitter !== userLowercase})
             const filteredPuddle = filterPuddle?.toString() || ''
             const pileSize = filterPuddle?.length - 1
 
