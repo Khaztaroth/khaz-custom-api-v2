@@ -280,21 +280,21 @@ export async function FindQuote(request: Request, env: Env) {
                 return new Response(`No quote with that number.`, {status: 400})
             }
         } else if (QuoteDB) {
-            var Quote: Object[] = []
-            var QuoteNumbers: Object[] = []
+            var FoundQuotes: Object[] = []
             var randomNumber = 1
+            var trailingPunctuation = new RegExp('[.,?!)_]')
             for(var i=1; Object.keys(QuoteDB).length >= i; i++) {
-                var found = QuoteDB[i].toLowerCase().includes(QuerryParam.toLocaleLowerCase().split('.', 1).join())
+                var found = QuoteDB[i].toLowerCase().includes(QuerryParam.toLocaleLowerCase().split(trailingPunctuation).join())
                 if (found) {
-                    QuoteNumbers = [...QuoteNumbers, i]
-                    Quote[i] = QuoteDB[i]
+                    FoundQuotes[i] = QuoteDB[i]
                 }
-                randomNumber = Math.floor(Math.random() * QuoteNumbers.length)
             }
-            var QuoteIndex: number = QuoteNumbers[randomNumber] as number
-            if (!Quote[QuoteIndex]) {return new Response("No quotes with that phrase yet.", {status: 200})}
+            var MatchingList = Object.keys(FoundQuotes).filter((lines) => lines !== undefined)
+            randomNumber = Math.floor(Math.random() * MatchingList.length)
+            var QuoteIndex: number = +MatchingList[randomNumber]
+            if (!QuoteDB[QuoteIndex]) {return new Response("No quotes with that phrase yet.", {status: 200})}
 
-            return new Response(`#${QuoteIndex}. ${Quote[QuoteIndex]}`, {status: 200})
+            return new Response(`#${QuoteIndex}. ${FoundQuotes[QuoteIndex]}`, {status: 200})
         }
     } else {
         if(QuoteDB) {
