@@ -1,5 +1,5 @@
 import { Env } from "..";
-import { DateTime, Zone } from "luxon";
+import { DateTime } from "luxon";
 
 interface Users {
 	"Khaztaroth315": string,
@@ -11,12 +11,12 @@ type QuoteObject = Record<number, string> | null
 
 export async function GenerateKey(request: Request) {
         var result = ''
-        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~'
+        var scrambled = characters.split('').sort(() => 0.5 - Math.random()).join('')
         var charactersLength = characters.length
         for (var i = 0; i <= 16; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            result += scrambled.charAt(Math.random() * charactersLength);
         }
-
         return new Response(`Key: ${result}`, {status: 200})
 }
 
