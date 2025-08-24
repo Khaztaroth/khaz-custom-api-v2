@@ -4,7 +4,7 @@ import { Hydration } from "./routes/hydration";
 import { DiceRoll } from "./routes/diceRoll";
 import { ClearAttempts, JoinPuddle, LeavePuddle, PurgePuddle } from "./routes/cuddlepuddle";
 import { WordPronunciation } from "./routes/toPhonetics";
-import { DeleteQuote, FindQuote, InsertQuote, ModifyQuote, SaveQuote } from "./routes/quotes";
+import { DeleteQuote, FindQuote, GenerateKey, InsertQuote, ModifyQuote, SaveQuote } from "./routes/quotes";
 
 export async function routeRequest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response|undefined> {
     const url = new URL(request.url);
@@ -39,6 +39,8 @@ export async function routeRequest(request: Request, env: Env, ctx: ExecutionCon
         return ModifyQuote(request, env)
       case "insertquote":
         return InsertQuote(request, env)
+      case "quotekeygen":
+        return GenerateKey(request)
       default:
         return new Response("Not found", { status: 404 });
     }

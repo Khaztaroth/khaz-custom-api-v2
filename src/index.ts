@@ -1,11 +1,5 @@
 import { routeRequest } from "./router"
 
-interface Users {
-	"Khaztaroth315": number,
-	"LeprechaunKoala": number,
-}
-export type Keys = Users
-
 export interface Env {
 	WEATHER_KEY: string,
 	DEFAULT_PLACE: string
