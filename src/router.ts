@@ -3,8 +3,7 @@ import { Weather } from "./routes/weather";
 import { Hydration } from "./routes/hydration";
 import { DiceRoll } from "./routes/diceRoll";
 import { ClearAttempts, JoinPuddle, LeavePuddle, PurgePuddle } from "./routes/cuddlepuddle";
-import { WordPronData, WordPronunciation } from "./routes/toPhonetics";
-import { timeZone } from "./routes/timeZone";
+import { WordPronunciation } from "./routes/toPhonetics";
 import { DeleteQuote, FindQuote, InsertQuote, ModifyQuote, SaveQuote } from "./routes/quotes";
 
 export async function routeRequest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response|undefined> {
@@ -16,8 +15,6 @@ export async function routeRequest(request: Request, env: Env, ctx: ExecutionCon
     switch (path[0]) {
       case "weather":
         return Weather(request, weather_key, defaultLocation);
-      case "timezone":
-        return timeZone(request)
       case "hydration":
         return Hydration(request);
       case "diceRoll":
