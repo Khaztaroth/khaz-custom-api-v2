@@ -90,18 +90,17 @@ export async function SaveQuote(request: Request, env: Env): Promise<Response> {
                 writetoDB(Quote)
                 return new Response(`Successfully saved quote #${Object.keys(placeHolder).length}`, {status: 200})
             }
-            if (formatting() == false) {
-                if(channelQuoteDB) {
-                    writetoDB(QuoteParam, channelQuoteDB)
-                    return new Response(`Successfully saved quote #${Object.keys(channelQuoteDB).length}`, {status: 200})
-                }
-                if (!channelQuoteDB) {
-                    writetoDB(QuoteParam)
-                    return new Response(`Successfully saved quote #${Object.keys(placeHolder).length}`, {status: 200})
+        }
+        if (formatting() == false) {
+            if(channelQuoteDB) {
+                writetoDB(QuoteParam, channelQuoteDB)
+                return new Response(`Successfully saved quote #${Object.keys(channelQuoteDB).length}`, {status: 200})
+            }
+            if (!channelQuoteDB) {
+                writetoDB(QuoteParam)
+                return new Response(`Successfully saved quote #${Object.keys(placeHolder).length}`, {status: 200})
             }
         } 
-    } else {
-    }   
     }
     return new Response("Something broke and I don't know what", {status: 200})
 }
