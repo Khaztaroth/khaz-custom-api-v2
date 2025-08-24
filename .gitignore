@@ -177,3 +177,6 @@ src/router.ts
 *.v1.*
 _deprecated/
 puddletally.ts
+
+#extra files
+quoteList.*

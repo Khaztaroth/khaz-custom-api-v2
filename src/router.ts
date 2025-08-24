@@ -3,10 +3,11 @@ import { Weather } from "./routes/weather";
 import { Hydration } from "./routes/hydration";
 import { DiceRoll } from "./routes/diceRoll";
 import { ClearAttempts, JoinPuddle, LeavePuddle, PurgePuddle } from "./routes/cuddlepuddle";
-import { WordPronunciation } from "./routes/toPhonetics";
+import { WordPronData, WordPronunciation } from "./routes/toPhonetics";
 import { timeZone } from "./routes/timeZone";
+import { DeleteQuote, FindQuote, InsertQuote, ModifyQuote, SaveQuote } from "./routes/quotes";
 
-export async function routeRequest(request: Request, env: Env, ctx: ExecutionContext) {
+export async function routeRequest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response|undefined> {
     const url = new URL(request.url);
     const path = url.pathname.split("/").slice(1);
     const weather_key = env.WEATHER_KEY;
@@ -31,6 +32,16 @@ export async function routeRequest(request: Request, env: Env, ctx: ExecutionCon
         return ClearAttempts(request, env)
       case "pronunciation":
         return WordPronunciation(request)
+      case "addquote":
+        return SaveQuote(request, env)
+      case "findquote":
+        return FindQuote(request, env)
+      case "deletequote":
+        return DeleteQuote(request,env)
+      case "modifyquote":
+        return ModifyQuote(request, env)
+      case "insertquote":
+        return InsertQuote(request, env)
       default:
         return new Response("Not found", { status: 404 });
     }

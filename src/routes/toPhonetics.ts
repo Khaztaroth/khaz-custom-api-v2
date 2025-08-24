@@ -10,7 +10,7 @@ type WordData = {
     tags: Array<tags>
   }
 
-export type WordPronunciation = [
+export type WordPronData = [
     WordData?: WordData
 ]
 
@@ -23,7 +23,7 @@ async function fetchWordPronunciation(wrd: string) {
     try {
         const req = await fetch(requestURL)
         if (req.ok) {
-            const data: WordPronunciation = await req.json();
+            const data: WordPronData = await req.json();
             const Pronunciation = ` pronounced /${data[0]?.tags[1].toString().split(":")[1]}/`
             return Pronunciation
         } else {
