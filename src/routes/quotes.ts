@@ -143,7 +143,7 @@ export async function DeleteQuote(request: Request, env: Env) {
                     }
                     return ob;
                 }, {})
-                env.quotes.put(ChannelDBName, JSON.stringify(sorted))
+                await env.quotes.put(ChannelDBName, JSON.stringify(sorted))
 
                 return new Response(`Succesfully removed quote ${number}`, {status: 200})
             } else {
