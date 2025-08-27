@@ -185,13 +185,14 @@ export async function ModifyQuote(request: Request, env: Env) {
     if(IndexParam && QuoteParam) {
         const number = +IndexParam
         if (!Number.isNaN(number)) {
-            const QuoteDB: Record<number, string> | null = await env.quotes.get(ChannelDBName)
+            const QuoteDB: Record<number, string> | null = await env.quotes.get(ChannelDBName, {type: "json"})
             if (QuoteDB) {
-                QuoteDB[number] = QuoteParam
+                var NewDB: Record<number,string> = QuoteDB
+                NewDB[number] = QuoteParam
             } else{
                 return new Response("Couldn't find your quote list.", {status: 500})
             }
-            env.quotes.put(ChannelDBName, JSON.stringify(QuoteDB))
+            await env.quotes.put(ChannelDBName, JSON.stringify(NewDB))
             return new Response(`Succesfully changed the quote to: ${QuoteParam}`)
         }
     }
@@ -239,7 +240,7 @@ export async function InsertQuote(request: Request, env: Env) {
                     }
                     return ob;
                 }, {})
-                env.quotes.put(`${ChannelDBName}`, JSON.stringify(sorted))
+                await env.quotes.put(`${ChannelDBName}`, JSON.stringify(sorted))
 
                 return new Response(`Succesfully inserted quote ${number}`, {status: 200})
             } else{
