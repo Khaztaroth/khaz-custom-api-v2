@@ -2,8 +2,8 @@ import { Env } from "..";
 import { DateTime } from "luxon";
 
 interface Users {
-	"Khaztaroth315": string,
-	"LeprechaunKoala": string,
+	"khaztaroth315": string,
+	"leprechaunkoala": string,
 }
 type Keys = Users
 
@@ -42,7 +42,7 @@ export async function SaveQuote(request: Request, env: Env): Promise<Response> {
         return new Response('Key not found', {status: 401})
     }
     if (+KeyParam && UserKeys[Channel as keyof Keys] !== KeyParam) {
-        console.error(KeyParam, UserKeys.Khaztaroth315)
+        console.error(KeyParam, UserKeys[Channel as keyof Users])
         return new Response("Invalid key.", {status: 401})
     }
 
@@ -67,10 +67,9 @@ export async function SaveQuote(request: Request, env: Env): Promise<Response> {
 
     async function writetoDB(quote: string, quoteDB?: Record<number, string>) {
         if (quoteDB){
-                var quoteCount = Object.keys(quoteDB).length
-                quoteDB[quoteCount+1] = quote
-                await env.quotes.put(ChannelDBName, JSON.stringify(quoteDB))
-                
+            var quoteCount = Object.keys(quoteDB).length
+            quoteDB[quoteCount+1] = quote
+            await env.quotes.put(ChannelDBName, JSON.stringify(quoteDB))
         } else {
             var placeHolder: Record<number, string> = {1: ''}
             placeHolder[1] = quote
@@ -94,11 +93,11 @@ export async function SaveQuote(request: Request, env: Env): Promise<Response> {
         }
         if (formatting() == false) {
             if(channelQuoteDB) {
-                writetoDB(QuoteParam, channelQuoteDB)
+                await writetoDB(QuoteParam, channelQuoteDB)
                 return new Response(`Successfully saved quote #${Object.keys(channelQuoteDB).length}`, {status: 200})
             }
             if (!channelQuoteDB) {
-                writetoDB(QuoteParam)
+                await writetoDB(QuoteParam)
                 return new Response(`Successfully saved quote #${Object.keys(placeHolder).length}`, {status: 200})
             }
         } 
@@ -123,7 +122,7 @@ export async function DeleteQuote(request: Request, env: Env) {
         return new Response('Key not found', {status: 401})
     }
     if (+KeyParam && UserKeys[Channel as keyof Keys] !== KeyParam) {
-        console.error(KeyParam, UserKeys.Khaztaroth315)
+        console.error(KeyParam, UserKeys[Channel as keyof Users])
         return new Response("Invalid key.", {status: 401})
     }
 
@@ -176,7 +175,7 @@ export async function ModifyQuote(request: Request, env: Env) {
         return new Response('Key not found', {status: 401})
     }
     if (+KeyParam && UserKeys[ChannelParam as keyof Keys] !== KeyParam) {
-        console.error(KeyParam, UserKeys.Khaztaroth315)
+        console.error(KeyParam, UserKeys[ChannelParam as keyof Users])
         return new Response("Invalid key.", {status: 401})
     }
 
@@ -219,7 +218,7 @@ export async function InsertQuote(request: Request, env: Env) {
         return new Response('Key not found', {status: 401})
     }
     if (+KeyParam && UserKeys[Channel as keyof Keys] !== KeyParam) {
-        console.error(KeyParam, UserKeys.Khaztaroth315)
+        console.error(KeyParam, UserKeys[Channel as keyof Users])
         return new Response("Couldn't find that user", {status: 401})
     }
 
@@ -264,7 +263,7 @@ export async function FindQuote(request: Request, env: Env) {
         return new Response('Key not found', {status: 401})
     }
     if (+KeyParam && UserKeys[Channel as keyof Keys] !== KeyParam) {
-        console.error(KeyParam, UserKeys.Khaztaroth315)
+        console.error(KeyParam, UserKeys[Channel as keyof Users])
         return new Response("Invalid key.", {status: 401})
     }
 
