@@ -127,7 +127,7 @@ export async function JoinPuddle (request: Request, env: Env): Promise<Response>
             } else if (ChannelLowercase && Pile && User) {
                 const tally = await AddAttempt(env, UserLowercase, ChannelLowercase, Count)
                 let newPuddle = Pile.concat(User).toString()
-                await env.puddle.put(PileKeyName, newPuddle)
+                await env.puddle.put(PileKeyName, newPuddle, {expirationTtl: 43200})
                 const response = `${User} has jumped into the puddle, they've jumped in ${tally} times, spicy.`
                 
                 return new Response(response, {status: 200})
