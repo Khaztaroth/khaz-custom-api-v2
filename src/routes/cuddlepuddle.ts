@@ -102,42 +102,53 @@ export async function PurgePuddle(request : Request, env : Env): Promise<Respons
     return new Response("Pudle is now empty.", {status: 200})
 }
 
+export async function CheckPuddle (request: Request, env: Env): Promise<Response> {
+    const [Channel] = GetParameters(request)
+    const ChannelLowercase = Channel?.toLowerCase()
+    const PileKeyName = `${ChannelLowercase}-pile`
+    const CurrentPile: string | null = await env.puddle.get(PileKeyName)
+    const Pile: string[] | undefined = CurrentPile?.split(',').filter((people) => people !== '')
+
+    if (!CurrentPile) {
+        return new Response("No one here I guess ¯\\_(ツ)_/¯")
+    } else if (Pile) {
+        const list = Pile.join(', ')
+        const pileSize = Pile.length
+        const message = `There's currently ${pileSize>1? `${pileSize} people` : `${pileSize} person`} in the puddle: ${list}.`
+
+        return new Response(message, {status: 200})
+    }
+
+    return new Response("Bad request", {status: 400})
+}
+
 export async function JoinPuddle (request: Request, env: Env): Promise<Response> {
     const [Channel, User, Count] = GetParameters(request)
     const [ChannelLowercase, UserLowercase] = [Channel?.toLowerCase(), User?.toLowerCase()]
     const PileKeyName = `${ChannelLowercase}-pile`
     const CurrentPile: string | null = await env.puddle.get(PileKeyName)
-    const Pile: string[] | undefined = CurrentPile?.split(',').filter((people) => people !== '')
+    const Pile: string[] = CurrentPile?.split(',').filter((people) => people !== '') || []
 
-    if (!UserLowercase) {
-        if (!CurrentPile) {
-            return new Response("No one here I guess ¯\\_(ツ)_/¯")
-        } else if(Pile) {
-            const list = Pile.join(', ')
-            const pileSize = Pile.length
-            const message = `There's currently ${pileSize>1? `${pileSize} people` : `${pileSize} person`} in the puddle: ${list}.`
-            
-            return new Response(message, {status: 200})
-        }
-    } else {
-            if (CurrentPile?.includes(UserLowercase)) {
-                const response = `${User} is already in the puddle, no double dipping`
-    
-                return new Response(response, {status: 200})
-            } else if (ChannelLowercase && Pile && User) {
-                const tally = await AddAttempt(env, UserLowercase, ChannelLowercase, Count)
-                let newPuddle = Pile.concat(User).toString()
-                await env.puddle.put(PileKeyName, newPuddle, {expirationTtl: 43200})
-                const response = `${User} has jumped into the puddle, they've jumped in ${tally} times, spicy.`
-                
-                return new Response(response, {status: 200})
-            }        
-        }
-        if (!Channel) {
-            return new Response("What are we doing, man?", {status: 400})
-        }
-        return new Response("Something ain't right but I don't know what", {status: 418})
+    if (!Channel) {
+        return new Response("What are we doing, man?", {status: 400})
     }
+    if (UserLowercase && ChannelLowercase){
+        if (CurrentPile?.includes(UserLowercase)) {
+            const response = `${User} is already in the puddle, no double dipping`
+    
+            return new Response(response, {status: 200})
+        } else if (User) {
+        const tally = await AddAttempt(env, UserLowercase, ChannelLowercase, Count)
+        let newPuddle = Pile.concat(User).toString()
+        await env.puddle.put(PileKeyName, newPuddle, {expirationTtl: 43200})
+        const response = `${User} has jumped into the puddle, they've jumped in ${tally} times, spicy.`
+        
+        return new Response(response, {status: 200})
+        }
+    }
+    
+    return new Response("Something ain't right but I don't know what", {status: 418})
+}
 
 export async function LeavePuddle (request: Request, env: Env): Promise<Response> {
     const [Channel, User] = GetParameters(request)

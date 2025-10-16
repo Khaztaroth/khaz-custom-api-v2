@@ -2,7 +2,7 @@ import { Env } from ".";
 import { Weather } from "./routes/weather";
 import { Hydration } from "./routes/hydration";
 import { DiceRoll } from "./routes/diceRoll";
-import { ClearAttempts, JoinPuddle, LeavePuddle, PurgePuddle } from "./routes/cuddlepuddle";
+import { CheckPuddle, ClearAttempts, JoinPuddle, LeavePuddle, PurgePuddle } from "./routes/cuddlepuddle";
 import { WordPronunciation } from "./routes/toPhonetics";
 import { DeleteQuote, FindQuote, GenerateKey, InsertQuote, ModifyQuote, SaveQuote } from "./routes/quotes";
 
@@ -19,6 +19,8 @@ export async function routeRequest(request: Request, env: Env, ctx: ExecutionCon
         return Hydration(request);
       case "diceRoll":
         return DiceRoll(request);
+      case "checkPuddle":
+        return CheckPuddle(request, env);
       case "joinPuddle": 
         return JoinPuddle(request, env);
       case "cleanPuddle": 
