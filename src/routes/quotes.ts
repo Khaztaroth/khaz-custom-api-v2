@@ -104,7 +104,7 @@ export async function SaveQuote(request: Request, env: Env): Promise<Response> {
 
 	if (QuoteParam && Channel) {
 		const channelQuoteDB: QuoteObject = await env.quotes.get(ChannelDBName, { type: 'json' });
-		await env.quotes.put(JSON.stringify(channelQuoteDB), `${ChannelDBName}-backup`);
+		await env.quotes.put(`${ChannelDBName}-backup`, JSON.stringify(channelQuoteDB));
 		var placeHolder: Record<number, string> = [];
 		if (formatting() == true) {
 			const Quote = `${QuoteParam}, ${CategoryParam ? `while ${PersonName ? PersonName : Channel} streamed ${CategoryParam}, ${CurrentDate}` : `${CurrentDate}`}`;
@@ -153,9 +153,10 @@ export async function DeleteQuote(request: Request, env: Env) {
 	}
 
 	const ChannelDBName = `${Channel}-quotes`;
+	const QuoteList: Record<number, string> | null = await env.quotes.get(ChannelDBName, { type: 'json' });
+	await env.quotes.put(`${ChannelDBName}-backup`, JSON.stringify(QuoteList));
 
 	if (IndexParam) {
-		const QuoteList: Record<number, string> | null = await env.quotes.get(ChannelDBName, { type: 'json' });
 		const number = +IndexParam;
 		if (QuoteList && !Number.isNaN(number)) {
 			if (QuoteList[number]) {
