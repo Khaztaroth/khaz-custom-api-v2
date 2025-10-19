@@ -49,7 +49,7 @@ export async function SaveQuote(request: Request, env: Env): Promise<Response> {
 		return new Response('Invalid key.', { status: 401 });
 	}
 
-	function zoneMatch(timezone: string) {
+	function zoneMatch(timezone: string | null) {
 		switch (timezone) {
 			case 'EST':
 			case 'ET':
@@ -69,6 +69,7 @@ export async function SaveQuote(request: Request, env: Env): Promise<Response> {
 			default:
 				'America/New_York';
 		}
+		return 'America/New_York';
 	}
 
 	const ChannelDBName = `${Channel}-quotes`;
@@ -87,7 +88,7 @@ export async function SaveQuote(request: Request, env: Env): Promise<Response> {
 		}
 	};
 	const CurrentDate = DateTime.now()
-		.setZone(zoneMatch(TimezoneParam || ''))
+		.setZone(zoneMatch(TimezoneParam || null))
 		.toFormat(dateFormat());
 
 	async function writetoDB(quote: string, quoteDB?: Record<number, string>) {
@@ -333,4 +334,9 @@ export async function FindQuote(request: Request, env: Env) {
 			return new Response(`#${randomNumber}. ${QuoteDB[randomNumber]}`);
 		}
 	}
+}
+
+export async function listQuotes(request: Request, env: Env) {
+	const parameters = new URL(request.url).searchParams;
+	const Channel = parameters.get('channel');
 }
