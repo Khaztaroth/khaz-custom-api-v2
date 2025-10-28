@@ -339,4 +339,19 @@ export async function FindQuote(request: Request, env: Env) {
 export async function listQuotes(request: Request, env: Env) {
 	const parameters = new URL(request.url).searchParams;
 	const Channel = parameters.get('channel');
+	const ChannelDBName = `${Channel}-quotes`;
+
+	const quoteObject: unknown = await env.quotes.get(ChannelDBName, { type: 'json' });
+	// const quoteList = JSON.stringify(quoteObject, null, 2);
+	// const filteredList = quoteList.replaceAll(/\\/g, '').replaceAll(/"(\w*)":/g, '$1:');
+
+	let response = new Response(JSON.stringify(quoteObject), { status: 200 });
+	response.headers.set('Access-Control-Allow-Origin', '*');
+	response.headers.append('Vary', 'Origin');
+
+	if (quoteObject) {
+		return response;
+	}
+
+	return new Response("Couldn't find a list from that channel", { status: 500 });
 }
