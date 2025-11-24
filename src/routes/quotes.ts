@@ -239,7 +239,7 @@ export async function ModifyQuote(request: Request, env: Env) {
 // 						if (keyNumb < number) {
 // 							ob[keyNumb] = QuoteDB[keyNumb];
 // 						} else if (keyNumb === number) {
-// 							ob[keyNumb] = {...QuoteDB[keyNumb], quote: QuoteParam};
+// 							ob[keyNumb] = {...QuoteDB[keyNumb], quote: QuoteParam}; \\ ob[keyNumb] is marked as potentially null and I don't know how to make it so it knows it won't be.
 // 						} else {
 // 							ob[keyNumb] = QuoteDB[keyNumb - 1];
 // 						}
@@ -292,7 +292,6 @@ export async function FindQuote(request: Request, env: Env) {
 	const QuoteDB: QuoteDatabase | null = await env.quotes.get(ChannelDBName, { type: 'json' });
 	const formatDate = (quoteDate: string | undefined): string => {
 		if (quoteDate) {
-			console.log(quoteDate);
 			var DatedateRegex = new RegExp('^[0-9]{1,2}/[0-9]{1,2}/[0-9]{2}$');
 			var YearRegex = new RegExp('^[0-9]{4}$');
 			if (quoteDate.length > 10) {
@@ -375,6 +374,7 @@ export async function FindQuote(request: Request, env: Env) {
 				{ status: 200 },
 			);
 		}
+		return new Response('No quotes found.', { status: 200 });
 	}
 }
 
