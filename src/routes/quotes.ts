@@ -374,7 +374,7 @@ export async function FindQuote(request: Request, env: Env) {
 				{ status: 200 },
 			);
 		}
-		return new Response('No quotes found.', { status: 200 });
+		return new Response('No quotes found.', { status: 404 });
 	}
 }
 
