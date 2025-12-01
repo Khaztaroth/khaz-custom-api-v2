@@ -4,7 +4,9 @@ import { Hydration } from './routes/hydration';
 import { DiceRoll } from './routes/diceRoll';
 import { CheckPuddle, ClearAttempts, JoinPuddle, LeavePuddle, PurgePuddle } from './routes/cuddlepuddle';
 import { WordPronunciation } from './routes/toPhonetics';
-import { DeleteQuote, FindQuote, GenerateKey, InsertQuote, listQuotes, ModifyQuote, SaveQuote } from './routes/quotes';
+import { DeleteQuote, FindQuote, GenerateKey, ListQuotes, ModifyQuote, SaveQuote } from './routes/quotes';
+
+// import {InsertQuote} from './routes/quotes';
 
 export async function routeRequest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response | undefined> {
 	const url = new URL(request.url);
@@ -32,7 +34,7 @@ export async function routeRequest(request: Request, env: Env, ctx: ExecutionCon
 		case 'pronunciation':
 			return WordPronunciation(request);
 		case 'listquotes':
-			return listQuotes(request, env);
+			return ListQuotes(request, env);
 		case 'addquote':
 			return SaveQuote(request, env);
 		case 'findquote':
@@ -41,8 +43,8 @@ export async function routeRequest(request: Request, env: Env, ctx: ExecutionCon
 			return DeleteQuote(request, env);
 		case 'modifyquote':
 			return ModifyQuote(request, env);
-		case 'insertquote':
-			return InsertQuote(request, env);
+		// case 'insertquote':
+		// 	return InsertQuote(request, env);
 		case 'quotekeygen':
 			return GenerateKey(request);
 		default:

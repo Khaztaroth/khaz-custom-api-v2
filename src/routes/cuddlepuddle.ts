@@ -136,8 +136,8 @@ export async function JoinPuddle(request: Request, env: Env): Promise<Response> 
 	if (!Channel) {
 		return new Response('What are we doing, man?', { status: 400 });
 	}
-	if (UserLowercase && ChannelLowercase && User) {
-		if (CurrentPile?.includes(User)) {
+	if (UserLowercase && ChannelLowercase) {
+		if (CurrentPile?.includes(UserLowercase)) {
 			const response = `${User} is already in the puddle, no double dipping`;
 
 			return new Response(response, { status: 200 });
