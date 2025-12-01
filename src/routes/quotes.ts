@@ -7,7 +7,7 @@ interface Users {
 }
 type Keys = Users;
 
-type QuoteObject = { quote: string; author: string | null; category: string | null; date: string } | null;
+type QuoteObject = { quote: string; author: string | null; extra_data: string | null; category: string | null; date: string } | null;
 type QuoteDatabase = Record<number, QuoteObject>;
 
 function formatDate(format: string): string {
@@ -77,14 +77,29 @@ export async function SaveQuote(request: Request, env: Env): Promise<Response> {
 
 	if (QuoteParam && Channel) {
 		const channelQuoteDB: QuoteDatabase | null = await env.quotes.get(ChannelDBName, { type: 'json' });
-		const quoteSegments = QuoteParam.split('-');
-		const quoteText = quoteSegments[0].replace(/(^")/g, '').replace(/(" $)/g, '');
-		const quoteAuthor = quoteSegments[1];
+		const segmentationIndex = QuoteParam.lastIndexOf('-');
+		const quoteText = QuoteParam.slice(0, segmentationIndex).replace(/(^")/g, '').replace(/(" $)/g, '');
+		const quoteAtributionWhole = QuoteParam.slice(segmentationIndex + 1);
+		const quoteAtributionSegments = quoteAtributionWhole.split(' ');
+		const quoteAuthor = quoteAtributionSegments[0].replace(/,\s*$/, '');
+		const extraData = () => {
+			var i = 0;
+			var extraBits = [];
+			while (i < quoteAtributionSegments.length) {
+				extraBits.push(quoteAtributionSegments[i + 1]);
+				i++;
+			}
+			return extraBits.join(' ');
+		};
+
+		console.log(quoteAuthor, extraData());
+
 		const CurrentDate = DateTime.now().toISO();
 		await env.quotes.put(`${ChannelDBName}-backup`, JSON.stringify(channelQuoteDB));
 		const Quote = {
 			quote: quoteText,
 			author: quoteAuthor,
+			extra_data: extraData(),
 			category: CategoryParam,
 			date: CurrentDate,
 		};
@@ -135,7 +150,8 @@ export async function DeleteQuote(request: Request, env: Env) {
 		if (QuoteList && !Number.isNaN(number)) {
 			if (QuoteList[number]) {
 				delete QuoteList[number];
-				var sorted = Object.keys(QuoteList).reduce((ob: Record<number, QuoteObject>, key) => {
+				var sorted = Object.keys(QuoteList).reduce((ob: QuoteDatabase, key) => {
+					// Reconstructing the list by shifting indices to avoid ghost quotes.
 					if (+key < number) {
 						ob[+key] = QuoteList[+key];
 					} else {
@@ -185,9 +201,9 @@ export async function ModifyQuote(request: Request, env: Env) {
 	if (IndexParam && QuoteParam) {
 		const number = +IndexParam;
 		if (!Number.isNaN(number)) {
-			const QuoteDB: Record<number, QuoteObject> | null = await env.quotes.get(ChannelDBName, { type: 'json' });
+			const QuoteDB: QuoteDatabase | null = await env.quotes.get(ChannelDBName, { type: 'json' });
 			if (QuoteDB) {
-				var NewDB: Record<number, QuoteObject> = QuoteDB;
+				var NewDB: QuoteDatabase = QuoteDB;
 				if (NewDB[number]) {
 					NewDB[number].quote = QuoteParam;
 				}
@@ -198,62 +214,64 @@ export async function ModifyQuote(request: Request, env: Env) {
 			return new Response(`Succesfully changed the quote to: ${QuoteParam}`);
 		}
 	}
+	return new Response('Invalid request.', { status: 400 });
 }
 
-// Gotta find a way to make this not explode
-// export async function InsertQuote(request: Request, env: Env) {
-// 	const parameters = new URL(request.url).searchParams;
-// 	const Channel = parameters.get('channel'); // Required, channel name
-// 	const KeyParam = parameters.get('key'); // Required, a key provided by the admin that will allow the data to be passed through
-// 	const QuoteParam = parameters.get('quote'); // Required, need to provide the text for the new quote
-// 	const IndexParam = parameters.get('index'); // Required, have to have an index to insert the quote in, so all the rest can be moved accordingly
+export async function InsertQuote(request: Request, env: Env) {
+	const parameters = new URL(request.url).searchParams;
+	const Channel = parameters.get('channel'); // Required, channel name
+	const KeyParam = parameters.get('key'); // Required, a key provided by the admin that will allow the data to be passed through
+	const QuoteParam = parameters.get('quote'); // Required, need to provide the text for the new quote
+	const IndexParam = parameters.get('index'); // Required, have to have an index to insert the quote in, so all the rest can be moved accordingly
 
-// 	const UserKeys: Keys = env.QUOTE_KEYS as unknown as Keys;
-// 	if (!QuoteParam) {
-// 		return new Response("I need to know what you're looking for, buster.", { status: 400 });
-// 	}
-// 	if (!Channel) {
-// 		return new Response('Whose channel is it tho?', { status: 400 });
-// 	}
-// 	if (!IndexParam) {
-// 		return new Response('No quote number.', { status: 400 });
-// 	}
-// 	if (!KeyParam) {
-// 		return new Response('Key not found', { status: 401 });
-// 	}
-// 	if (+KeyParam && UserKeys[Channel as keyof Keys] !== KeyParam) {
-// 		console.error(KeyParam, UserKeys[Channel as keyof Users]);
-// 		return new Response("Couldn't find that user", { status: 401 });
-// 	}
+	const UserKeys: Keys = env.QUOTE_KEYS as unknown as Keys;
+	if (!QuoteParam) {
+		return new Response("I need to know what you're looking for, buster.", { status: 400 });
+	}
+	if (!Channel) {
+		return new Response('Whose channel is it tho?', { status: 400 });
+	}
+	if (!IndexParam) {
+		return new Response('No quote number.', { status: 400 });
+	}
+	if (!KeyParam) {
+		return new Response('Key not found', { status: 401 });
+	}
+	if (+KeyParam && UserKeys[Channel as keyof Keys] !== KeyParam) {
+		console.error(KeyParam, UserKeys[Channel as keyof Users]);
+		return new Response("Couldn't find that user", { status: 401 });
+	}
 
-// 	const ChannelDBName = `${Channel}-quotes`;
+	const ChannelDBName = `${Channel}-quotes`;
 
-// 	if (IndexParam && QuoteParam) {
-// 		const number = +IndexParam;
-// 		if (!Number.isNaN(number)) {
-// 			const QuoteDB: QuoteDatabase | null = await env.quotes.get(ChannelDBName, { type: 'json' });
-// 			if (QuoteDB) {
-// 				var sorted = Object.keys(QuoteDB).reduce((ob: Record<number, QuoteObject>, key: string) => {
-// 					var keyNumb = +key;
-// 					if (ob)
-// 						if (keyNumb < number) {
-// 							ob[keyNumb] = QuoteDB[keyNumb];
-// 						} else if (keyNumb === number) {
-// 							ob[keyNumb] = {...QuoteDB[keyNumb], quote: QuoteParam}; \\ ob[keyNumb] is marked as potentially null and I don't know how to make it so it knows it won't be.
-// 						} else {
-// 							ob[keyNumb] = QuoteDB[keyNumb - 1];
-// 						}
-// 					return ob;
-// 				}, {});
-// 				await env.quotes.put(`${ChannelDBName}`, JSON.stringify(sorted));
+	if (IndexParam && QuoteParam) {
+		const number = +IndexParam;
+		if (!Number.isNaN(number)) {
+			const QuoteDB: QuoteDatabase | null = await env.quotes.get(ChannelDBName, { type: 'json' });
+			if (QuoteDB) {
+				var sorted = Object.keys(QuoteDB).reduce((ob: QuoteDatabase, key: string) => {
+					var keyNumb = +key;
+					if (ob)
+						if (keyNumb < number) {
+							ob[keyNumb] = QuoteDB[keyNumb];
+						} else if (keyNumb === number) {
+							ob[keyNumb] = QuoteDB[keyNumb];
+						} else {
+							ob[keyNumb] = QuoteDB[keyNumb - 1];
+						}
+					return ob;
+				}, {});
+				await env.quotes.put(`${ChannelDBName}`, JSON.stringify(sorted));
 
-// 				return new Response(`Succesfully inserted quote ${number}`, { status: 200 });
-// 			} else {
-// 				return new Response("Couldn't find your quote list.", { status: 500 });
-// 			}
-// 		}
-// 	}
-// }
+				return new Response(`Succesfully inserted quote ${number}`, { status: 200 });
+			} else {
+				return new Response("Couldn't find your quote list.", { status: 500 });
+			}
+		}
+		return new Response('Invalid request, index not a number', { status: 400 });
+	}
+	return new Response('Invalid request.', { status: 400 });
+}
 
 export async function FindQuote(request: Request, env: Env) {
 	const parameters = new URL(request.url).searchParams;
@@ -274,22 +292,24 @@ export async function FindQuote(request: Request, env: Env) {
 		console.error(KeyParam, UserKeys[Channel as keyof Users]);
 		return new Response('Invalid key.', { status: 401 });
 	}
-
 	const setLocale = () => {
-		if (!LocaleParam) {
-			return 'en-US';
+		switch (LocaleParam) {
+			case 'US':
+				return 'en-US';
+			case 'GB':
+				return 'en-GB';
+			default:
+				return 'en-US';
 		}
-		if (LocaleParam === 'US') {
-			return 'en-US';
-		}
-		if (LocaleParam === 'GB') {
-			return 'en-GB';
-		}
-		return 'en-US';
 	};
 
 	const ChannelDBName = `${Channel}-quotes`;
 	const QuoteDB: QuoteDatabase | null = await env.quotes.get(ChannelDBName, { type: 'json' });
+
+	if (!QuoteDB) {
+		return new Response('No quotes available.', { status: 404 });
+	}
+
 	const formatDate = (quoteDate: string | undefined): string => {
 		if (quoteDate) {
 			var DatedateRegex = new RegExp('^[0-9]{1,2}/[0-9]{1,2}/[0-9]{2}$');
@@ -312,29 +332,56 @@ export async function FindQuote(request: Request, env: Env) {
 			if (YearRegex.test(quoteDate)) {
 				return quoteDate;
 			} else {
-				return 'Unknown';
+				return 'At some point';
 			}
 		}
-		return 'Unknown';
+		return 'At some point';
+	};
+
+	const findCategory = (category: string) => {
+		console.log(category);
+		if (category.toLowerCase() === 'n/a') {
+			return 'Something';
+		}
+		return category;
+	};
+
+	const craftResponse = (
+		number: string,
+		quote: string | undefined,
+		author: string | undefined | null,
+		extra_data: string | undefined | null,
+		category: string | undefined | null,
+		channel: string,
+		date: string,
+	) => {
+		if (author == 'gimmick') {
+			return new Response(quote, { status: 200 });
+		}
+		return new Response(
+			`#${number}. "${quote}" ${author ? `-${author}` : ''},${extra_data ? extra_data : ''} while ${channel} streamed ${findCategory(category || '')}, ${date}`,
+			{ status: 200 },
+		);
 	};
 
 	if (QuerryParam) {
 		const number = +QuerryParam;
-		if (QuoteDB && !Number.isNaN(number)) {
-			const found = QuoteDB[number];
-			const streamer = ChannelShortName || Channel;
-			const quote = found?.quote;
-			const author = found?.author;
-			const game = found?.category;
-			const date = formatDate(found?.date);
-
-			console.log(quote);
-			if (found) {
-				return new Response(`#${number}. "${quote}" -${author} while ${streamer}, streamed ${game}, ${date}`);
-			} else {
+		if (!Number.isNaN(number)) {
+			const found: QuoteObject = QuoteDB[number];
+			if (!found) {
 				return new Response(`No quote with that number.`, { status: 400 });
 			}
-		} else if (QuoteDB) {
+			const streamer = ChannelShortName || Channel;
+			const quote = found.quote;
+			const author = found.author;
+			const extra_data = found.extra_data;
+			const category = found.category;
+			const date = formatDate(found?.date);
+
+			console.log(author);
+
+			return craftResponse(number.toString(), quote, author, extra_data, category, streamer, date);
+		} else {
 			var FoundQuotes: QuoteDatabase = [];
 			var randomNumber = 1;
 			var trailingPunctuation = new RegExp('[.,?!)_]');
@@ -353,28 +400,26 @@ export async function FindQuote(request: Request, env: Env) {
 			const streamer = ChannelShortName || Channel;
 			const quote = FoundQuotes[QuoteIndex]?.quote;
 			const author = FoundQuotes[QuoteIndex]?.author;
-			const game = FoundQuotes[QuoteIndex]?.category;
+			const extra_data = FoundQuotes[QuoteIndex]?.extra_data;
+			const category = FoundQuotes[QuoteIndex]?.category;
 			const date = formatDate(FoundQuotes[QuoteIndex]?.date);
 
-			return new Response(`#${QuoteIndex}. "${quote}" -${author} while ${streamer}, streamed ${game}, ${date}`, { status: 200 });
+			return craftResponse(randomNumber.toString(), quote, author, extra_data, category, streamer, date);
 		}
 	} else {
-		if (QuoteDB) {
-			var listLength = Object.keys(QuoteDB).length;
-			var randomNumber = Math.floor(Math.random() * listLength);
-			if (randomNumber === 0) {
-				randomNumber = 1;
-			}
-			const quotetoshow = QuoteDB[randomNumber];
-			const streamer = ChannelShortName || Channel;
-			const date = formatDate(quotetoshow?.date);
-
-			return new Response(
-				`#${randomNumber}. "${quotetoshow?.quote}" -${quotetoshow?.author} while ${streamer}, streamed ${quotetoshow?.category || 'Unknown'}, ${date}`,
-				{ status: 200 },
-			);
+		var listLength = Object.keys(QuoteDB).length;
+		var randomNumber = Math.floor(Math.random() * listLength);
+		if (randomNumber === 0) {
+			randomNumber = 1;
 		}
-		return new Response('No quotes found.', { status: 404 });
+		const quote = QuoteDB[randomNumber]?.quote;
+		const author = QuoteDB[randomNumber]?.author;
+		const extra_data = QuoteDB[randomNumber]?.extra_data;
+		const category = QuoteDB[randomNumber]?.category;
+		const streamer = ChannelShortName || Channel;
+		const date = formatDate(QuoteDB[randomNumber]?.date);
+
+		return craftResponse(randomNumber.toString(), quote, author, extra_data, category, streamer, date);
 	}
 }
 
