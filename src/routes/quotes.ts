@@ -92,9 +92,7 @@ export async function SaveQuote(request: Request, env: Env): Promise<Response> {
 			return extraBits.join(' ');
 		};
 
-		console.log(quoteAuthor, extraData());
-
-		const CurrentDate = DateTime.now().toISO();
+		const CurrentDate = DateTime.now().setZone('America/New_York').toFormat('MM/dd/yy');
 		await env.quotes.put(`${ChannelDBName}-backup`, JSON.stringify(channelQuoteDB));
 		const Quote = {
 			quote: quoteText,
@@ -327,7 +325,7 @@ export async function FindQuote(request: Request, env: Env) {
 					formatting.day = 'd';
 				}
 				var format = `${formatting.month}/${formatting.day}/${formatting.year}`;
-				return DateTime.fromFormat(quoteDate, format).setLocale(setLocale()).toLocaleString();
+				return DateTime.fromFormat(quoteDate, format).setLocale(setLocale()).toFormat('MM/dd/yy');
 			}
 			if (YearRegex.test(quoteDate)) {
 				return quoteDate;
@@ -339,7 +337,6 @@ export async function FindQuote(request: Request, env: Env) {
 	};
 
 	const findCategory = (category: string) => {
-		console.log(category);
 		if (category.toLowerCase() === 'n/a') {
 			return 'Something';
 		}
@@ -377,8 +374,6 @@ export async function FindQuote(request: Request, env: Env) {
 			const extra_data = found.extra_data;
 			const category = found.category;
 			const date = formatDate(found?.date);
-
-			console.log(author);
 
 			return craftResponse(number.toString(), quote, author, extra_data, category, streamer, date);
 		} else {
